@@ -11,9 +11,10 @@ let hourlyForcastUrl;
 
 hourlyForcastBtn.addEventListener("click", () => {
     const cityValue = city.value;
-    geoCodingUrl = `http://api.openweathermap.org/geo/1.0/direct?q=${cityValue}&limit=5&appid=${apiKey}`
+    // geoCodingUrl = `http://api.openweathermap.org/geo/1.0/direct?q=${cityValue}&limit=5&appid=${apiKey}`
+    geoCodingUrl = `https://api.openweathermap.org/data/2.5/weather?q=${cityValue}&appid=${apiKey}&units=metric`;geoCodingUrl = `http://api.openweathermap.org/geo/1.0/direct?q=${cityValue}&limit=5&appid=${apiKey}`
     geo(geoCodingUrl);
-    // run(hourlyForcastUrl)
+    run(hourlyForcastUrl)
 })
 async function geo(url){
     fetch(url)
@@ -34,12 +35,22 @@ function run(url){
     })
     .then(data => {
         const timeOnly = data.list[0].dt_txt.split(" ")[1];
+        console.log(data.list)
+        const now = new Date();
+        now.setMinutes(0, 0, 0); // Reset to the full hour
+        const nextHourTimestamp = Math.floor(now.getTime() / 1000) + 3600;
+        let closestForecast = data.list.reduce((prev, curr) => 
+            Math.abs(curr.dt - nextHourTimestamp) < Math.abs(prev.dt - nextHourTimestamp) ? curr : prev
+        );
+        console.log(`Forecast for next hour (${new Date(closestForecast.dt * 1000)}):`);
+        console.log(`Temperature: ${closestForecast.main.temp}°C`);
+        console.log(`Weather: ${closestForecast.weather[0].description}`);
+
         document.getElementById("weather-info").innerHTML = `
-        <h2>Weather Forcast for ${timeOnly}</h2>
-        <p>Temperature: ${data.list[0].main.temp}C</p>
-        <p>Humidity: ${data.list[0].main.humidity}%</p>
-        <p>Wind Speed: ${data.list[0].wind.speed} m/s</p>
-        <p>Condition: ${data.list[0].weather[0].description}</p>`;
+        <h2>Forecast for next hour (${new Date(closestForecast.dt * 1000)}):</h2>
+        <p>Temperature: ${closestForecast.main.temp}C</p>
+        
+        <p>Condition: ${closestForecast.weather[0].description}</p>`;
     })
 }
 
